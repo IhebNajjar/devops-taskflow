@@ -100,8 +100,9 @@ class TestTaskFlowAPI(unittest.TestCase):
         self.assertIn("tasks", data)
         self.assertGreaterEqual(len(data["tasks"]), 3)
 
+    def test_09_deliberate_failure(self):
+        """Deliberate failing test to demonstrate CI failure / Red pipeline for teacher evaluation."""
+        self.assertEqual(1, 2, "Assertion failed: 1 != 2 (Demonstration of pipeline failure on broken test)")
+
 if __name__ == "__main__":
     unittest.main()
-
-    def test_09_deliberate_failure(self):
-        self.assertEqual(1, 2, 'Deliberate test failure for teacher demo')
