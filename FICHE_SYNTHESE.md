@@ -89,3 +89,20 @@ curl -f http://localhost:8000/health
 # Validation réussie : HTTP 200 OK -> Fin du rollback
 ```
 *Temps moyen d'exécution du rollback : < 5 secondes.*
+
+---
+
+## 4. Liens Officiels des Livrables & Démonstrations CI/CD
+
+Conformément aux exigences du sujet (Partie 4 : Livrables finaux) :
+
+* **Dépôt Git du projet :**  
+  [https://github.com/IhebNajjar/devops-taskflow](https://github.com/IhebNajjar/devops-taskflow)
+
+* **Exécution de Pipeline Réussie (Pipeline Vert / Green) :**  
+  [https://github.com/IhebNajjar/devops-taskflow/actions/runs/44918320736](https://github.com/IhebNajjar/devops-taskflow/actions/runs/44918320736)  
+  *(Pull Request associée : [PR #2](https://github.com/IhebNajjar/devops-taskflow/pull/2) - Tests unitaires 3.10 & 3.11 réussis, image Docker construite avec succès)*
+
+* **Exécution de Pipeline en Échec (Pipeline Rouge / Red) :**  
+  [https://github.com/IhebNajjar/devops-taskflow/actions/runs/44918222101](https://github.com/IhebNajjar/devops-taskflow/actions/runs/44918222101)  
+  *(Pull Request associée : [PR #1](https://github.com/IhebNajjar/devops-taskflow/pull/1) - Échec déterministe lors de l'exécution de `pytest test_api.py` sur l'assertion `1 != 2`)*

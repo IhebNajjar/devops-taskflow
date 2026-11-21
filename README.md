@@ -123,3 +123,12 @@ cp .env.example .env
 | `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql://taskflow_user:taskflow_pass@db:5432/taskflow_db` |
 | `IMAGE_TAG` | Tag de l'image pour déploiement/rollback | `v1.0.0` |
 | `GROQ_API_KEY` | Clé d'API Groq (Optionnel pour IA 120B) | *(Optionnel)* |
+
+---
+
+## 📋 Liens des Livrables Officiels (Partie 4 du Sujet)
+
+* **Dépôt Git :** [https://github.com/IhebNajjar/devops-taskflow](https://github.com/IhebNajjar/devops-taskflow)
+* **Pipeline Réussi (Green) :** [Action Run #44918320736](https://github.com/IhebNajjar/devops-taskflow/actions/runs/44918320736) | [Pull Request #2](https://github.com/IhebNajjar/devops-taskflow/pull/2)
+* **Pipeline en Échec (Red) :** [Action Run #44918222101](https://github.com/IhebNajjar/devops-taskflow/actions/runs/44918222101) | [Pull Request #1](https://github.com/IhebNajjar/devops-taskflow/pull/1)
+* **Fiche Synthèse 1 Page :** [FICHE_SYNTHESE.md](FICHE_SYNTHESE.md) (Disponible également au format Word pour impression)
