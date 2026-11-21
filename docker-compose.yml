@@ -1,0 +1,81 @@
+# ==============================================================================
+# TaskFlow Docker Compose Configuration
+# Conforms to DevOps Module Standards:
+#  - Application + Base de données PostgreSQL
+#  - Connexion par nom de service ('db')
+#  - Port de la base NON publié vers l'hôte (port 5432 accessible uniquement en interne)
+#  - Volume persistant pour les données PostgreSQL
+#  - Démarrage conditionné à la santé (depends_on: db: condition: service_healthy)
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # 1. Base de données PostgreSQL (Port NON publié vers l'hôte)
+  # --------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: taskflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taskflow_db
+      POSTGRES_USER: taskflow_user
+      POSTGRES_PASSWORD: taskflow_pass
+    # Port interne UNIQUEMENT (non publié sur la machine hôte)
+    expose:
+      - "5432"
+    # Volume persistant pour la base de données
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Contrôle de santé de la base de données
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow_user -d taskflow_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - taskflow-network
+
+  # --------------------------------------------------------------------------
+  # 2. Application TaskFlow (FastAPI + SPA)
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: taskflow:${IMAGE_TAG:-v1.0.0}
+    container_name: taskflow-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Connexion par nom de service 'db'
+      DATABASE_URL: postgresql://taskflow_user:taskflow_pass@db:5432/taskflow_db
+      PORT: 8000
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    # Démarrage conditionné à la santé de la base de données
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - taskflow-network
+
+# ------------------------------------------------------------------------------
+# Volumes & Réseaux
+# ------------------------------------------------------------------------------
+volumes:
+  db_data:
+    name: taskflow_db_data
+
+networks:
+  taskflow-network:
+    name: taskflow_internal_net
+    driver: bridge
