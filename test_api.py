@@ -102,3 +102,6 @@ class TestTaskFlowAPI(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_09_deliberate_failure(self):
+        self.assertEqual(1, 2, 'Deliberate test failure for teacher demo')
