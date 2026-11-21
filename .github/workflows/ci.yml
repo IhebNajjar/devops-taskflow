@@ -58,27 +58,9 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: actions/setup-buildx-action@v3
-
-      - name: Extract Metadata (Tags, Labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: taskflow
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-
       - name: Build Docker Image (Explicit Tag, Non-Root, Healthcheck)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          tags: taskflow:${{ github.ref_name }}
-          load: true
+        run: |
+          docker build -t taskflow:${{ github.ref_name }} .
 
   # --------------------------------------------------------------------------
   # STAGE 3: Automated Deployment on Tag v*.*.* + Health Check (Bonus 2)
@@ -96,7 +78,7 @@ jobs:
       - name: Start Docker Compose Environment
         run: |
           export IMAGE_TAG=${{ github.ref_name }}
-          docker compose up -d
+          docker compose up -d --build
 
       - name: Verify Service Healthcheck (/health)
         run: |
