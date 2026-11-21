@@ -1,0 +1,114 @@
+name: TaskFlow DevOps CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  # --------------------------------------------------------------------------
+  # STAGE 1: Matrix Unit Testing + JUnit XML Artifacts (Point 5 & Bonus 3)
+  # --------------------------------------------------------------------------
+  test:
+    name: Run Tests on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Test Suite with JUnit Output
+        run: |
+          pytest test_api.py -v --junitxml=test-results.xml
+
+      - name: Upload Test Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-test-results-py${{ matrix.python-version }}
+          path: test-results.xml
+
+  # --------------------------------------------------------------------------
+  # STAGE 2: Build & Package Docker Image (Point 3, Point 5, Point 6)
+  # 'needs: test' ensures image is only built when all tests succeed
+  # --------------------------------------------------------------------------
+  build:
+    name: Build Production Container Image
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Extract Metadata (Tags, Labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: taskflow
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+
+      - name: Build Docker Image (Explicit Tag, Non-Root, Healthcheck)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: taskflow:${{ github.ref_name }}
+          load: true
+
+  # --------------------------------------------------------------------------
+  # STAGE 3: Automated Deployment on Tag v*.*.* + Health Check (Bonus 2)
+  # --------------------------------------------------------------------------
+  deploy:
+    name: Automated Deployment & Health Verification
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Start Docker Compose Environment
+        run: |
+          export IMAGE_TAG=${{ github.ref_name }}
+          docker compose up -d
+
+      - name: Verify Service Healthcheck (/health)
+        run: |
+          echo "Waiting for healthcheck..."
+          sleep 5
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Service is HEALTHY (200 OK)!"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "❌ Healthcheck failed!"
+          exit 1
