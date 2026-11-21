@@ -89,3 +89,15 @@ curl -f http://localhost:8000/health
 # Validation réussie : HTTP 200 OK -> Fin du rollback
 ```
 *Temps moyen d'exécution du rollback : < 5 secondes.*
+
+---
+
+## 4. Adresses d'Exécution des Pipelines CI/CD
+
+* **Pipeline Réussi (Vert) :**  
+  `https://gitlab.com/ihebn/devops-taskflow/-/pipelines/1`  
+  *(Suite de tests unitaires 8/8 passés sur Python 3.10 et Python 3.11, rapport JUnit XML publié, image construite).*
+
+* **Pipeline Échoué (Rouge) :**  
+  `https://gitlab.com/ihebn/devops-taskflow/-/pipelines/2`  
+  *(Échec volontaire : échec d'assertion dans test_api.py, blocage automatique de la fusion sur main).*
