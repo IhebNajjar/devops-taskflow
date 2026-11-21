@@ -1,13 +1,12 @@
-# TaskFlow — Smart Task & Project Manager (DevOps Module)
-**Étudiant :** Licence 3 · DSI · ISET  
-**Module :** DevOps — Projet de Fin de Module  
-**Note visée :** 20 / 20 (16 pts essentiels + 4 pts soutenance + 4 pts bonus)
+# TaskFlow — Smart Task & Project Management Platform
+
+TaskFlow est une application web moderne de gestion de projets et de tâches structurées avec sous-tâches, décomposition assistée par IA et suivi de progression, conçue selon les standards DevOps (conteneurisation multi-niveaux, orchestration, intégration et déploiement continus).
 
 ---
 
-## 🚀 Démarrer le Projet en UNE Seule Commande
+## 🚀 Démarrage Rapide (En UNE Commande)
 
-Pour lancer l'ensemble de l'infrastructure (Application FastAPI + Base de données PostgreSQL + Volume persistant) :
+Pour compiler et démarrer l'ensemble de l'infrastructure (Application Web + Base de données PostgreSQL + Volume persistant) :
 
 ```bash
 docker compose up -d --build
@@ -15,86 +14,112 @@ docker compose up -d --build
 
 L'application est immédiatement accessible sur :
 * **Interface Web :** [http://localhost:8000](http://localhost:8000)
-* **Contrôle de Santé :** [http://localhost:8000/health](http://localhost:8000/health)
+* **Contrôle de Santé (Healthcheck) :** [http://localhost:8000/health](http://localhost:8000/health)
 
----
-
-## 📋 Tableau de Conformité au Barème de l'Enseignant
-
-| # | Exigence du Guide Étudiant | Fichier / Implémentation | Statut |
-| :--- | :--- | :--- | :--- |
-| **1** | **Git propre** (Commits clairs, .gitignore, aucun secret) | `.gitignore`, `.env.example`, commits conventionnels | ✅ Conforme (2 pts) |
-| **2** | **Automatiser par script** (Bash, renvoie 0 en succès, code non nul en échec) | `scripts/check.sh` & `scripts/check.bat` | ✅ Conforme (2 pts) |
-| **3** | **Conteneuriser** (Dockerfile, .dockerignore, tag explicite, non-root, HEALTHCHECK) | `Dockerfile` (`python:3.11-slim`, `USER appuser`, `HEALTHCHECK`) | ✅ Conforme (3 pts) |
-| **4** | **Assembler avec Compose** (App + DB Postgres, nom de service `db`, port privé, volume persistant, santé) | `docker-compose.yml` (`condition: service_healthy`, port privé) | ✅ Conforme (3 pts) |
-| **5** | **Pipeline CI** (Merge request, tests puis build avec `needs`, artefact JUnit XML) | `.gitlab-ci.yml` & `.github/workflows/ci.yml` | ✅ Conforme (3 pts) |
-| **6** | **Livrer & Mettre en service** (Tag vX.Y.Z, image publiée et JAMAIS reconstruite, contrôle santé) | `scripts/deploy.sh` & Stage CD automatique | ✅ Conforme (2 pts) |
-| **7** | **Revenir en arrière** (Retour à la version précédente démontré sans reconstruction) | `scripts/rollback.sh` | ✅ Conforme (1 pt) |
-| **8** | **La Soutenance (10 min)** (MR verte, MR rouge + erreur dans logs, déploiement, rollback) | `SOUTENANCE.md` | ✅ Conforme (4 pts) |
-| **B1** | **Bonus : Protection de main** (MR rouge bloquée) | Documenté dans `SOUTENANCE.md` | 🌟 Bonus (+1 pt) |
-| **B2** | **Bonus : Déploiement automatique sur tag** (Déclenché sur tag `v*` + test santé) | `.gitlab-ci.yml` (`deploy:test-environment`) | 🌟 Bonus (+2 pts) |
-| **B3** | **Bonus : Matrice de versions** (Tests sur Python 3.10 et Python 3.11) | Matrice CI dans `.gitlab-ci.yml` | 🌟 Bonus (+1 pt) |
-
----
-
-## 🛠️ Scripts d'Automatisation Disponibles
-
-### 1. Script de Contrôle Qualité & Tests (Point 2)
-Exécute la compilation syntaxique, la suite de tests unitaires et la validation du contrat `/health`. Renvoie **0** en cas de succès, **1** en cas d'erreur.
+Pour arrêter les services :
 ```bash
-# Sous Linux / macOS / Git Bash :
-./scripts/check.sh
-
-# Sous Windows Command Prompt :
-.\scripts\check.bat
-```
-
-### 2. Déploiement d'une Version Spécifique (Point 6)
-Déploie une version étiquetée sans la recompiler et vérifie sa santé :
-```bash
-./scripts/deploy.sh v1.0.0
-```
-
-### 3. Procédure de Retour Arrière (Rollback) (Point 7)
-Restaure instantanément une version antérieure sans altérer la base de données :
-```bash
-./scripts/rollback.sh v0.9.0
+docker compose down
 ```
 
 ---
 
 ## 🏗️ Architecture Technique
 
+La solution repose sur une architecture conteneurisée isolée orchestrée par Docker Compose :
+
 ```
-                              Navigateur Client
-                                      │
-                         Port 8000    ▼
-               ┌──────────────────────────────────────────────┐
-               │         Réseau Privé Docker Compose          │
-               │                                              │
-               │   ┌──────────────────────────────────────┐   │
-               │   │      taskflow-app (Conteneur)        │   │
-               │   │  • Base image: python:3.11-slim      │   │
-               │   │  • Utilisateur: appuser (non-root)   │   │
-               │   │  • FastAPI Backend + SPA Frontend    │   │
-               │   │  • Route: /health                    │   │
-               │   └──────────────────┬───────────────────┘   │
-               │                      │                       │
-               │                      │ Nom d'hôte: 'db:5432' │
-               │                      ▼                       │
-               │   ┌──────────────────────────────────────┐   │
-               │   │       taskflow-db (Conteneur)        │   │
-               │   │  • Base image: postgres:16-alpine    │   │
-               │   │  • Port interne: 5432 (NON PUBLIÉ)   │   │
-               │   │  • Volume persistant: db_data        │   │
-               │   │  • Healthcheck: pg_isready           │   │
-               │   └──────────────────────────────────────┘   │
-               └──────────────────────────────────────────────┘
+                        Machine Hôte (Navigateur Utilisateur)
+                                       │
+                                       │ Port publié: 8000:8000
+                                       ▼
+             ┌──────────────────────────────────────────────────┐
+             │                Réseau Privé Docker               │
+             │             (taskflow_internal_net)              │
+             │                                                  │
+             │   ┌─────────────────────┐   pg_isready           │
+             │   │    taskflow-db      │◄───────────────────┐   │
+             │   │  (Postgres 16 Alpine)                    │   │
+             │   │  Port 5432 PRIVÉ    │                    │   │
+             │   │  Volume: db_data    │                    │   │
+             │   └──────────┬──────────┘                    │   │
+             │              │                               │   │
+             │              │ Nom d'hôte 'db'               │   │
+             │              │ (Condition: service_healthy)  │   │
+             │              ▼                               │   │
+             │   ┌─────────────────────┐                    │   │
+             │   │    taskflow-app     │────────────────────┘   │
+             │   │  (Python 3.11-slim) │                        │
+             │   │  User: appuser (non-root)                    │
+             │   │  Route: /health     │                        │
+             │   └─────────────────────┘                        │
+             └──────────────────────────────────────────────────┘
+```
+
+### Principes Clés d'Architecture :
+* **Sécurité & Isolation :** Le port de la base de données (5432) est **strictement interne** au réseau Docker et n'est pas publié sur la machine hôte.
+* **Persistance :** Les données PostgreSQL sont conservées dans le volume nommé persistant `taskflow_db_data`.
+* **Ordonnancement par Santé :** L'application attend la disponibilité opérationnelle validée de la base de données (`depends_on: db: condition: service_healthy`).
+* **Sécurité Conteneur :** Le conteneur s'exécute sous un utilisateur non-privilégié (`appuser`, UID 10001) et intègre une sonde de santé native (`HEALTHCHECK`) testant `/health`.
+
+---
+
+## 🛠️ Scripts d'Automatisation
+
+Le dossier `scripts/` fournit les outils d'automatisation des opérations :
+
+### 1. Contrôle Qualité & Tests Automatisés
+Exécute la vérification syntaxique, lance la suite complète de tests unitaires via `pytest` avec génération du rapport JUnit XML, et valide la route `/health`.
+```bash
+# Sous Linux / macOS / Git Bash :
+./scripts/check.sh
+
+# Sous Windows :
+.\scripts\check.bat
+```
+*Le script renvoie **0** en cas de succès et **1** en cas d'échec.*
+
+### 2. Déploiement d'une Version Étiquetée
+Déploie une version spécifique sans recompilation de l'image Docker (`--no-build`) et vérifie automatiquement la route de santé :
+```bash
+./scripts/deploy.sh v1.0.0
+```
+
+### 3. Procédure de Retour Arrière (Rollback)
+Permet de revenir instantanément à une version antérieure sans altérer les données de la base :
+```bash
+./scripts/rollback.sh v0.9.0
 ```
 
 ---
 
-## 📦 Documents Fournis pour l'Évaluation
-* [FICHE_SYNTHESE.md](file:///c:/Users/ihebn/OneDrive/Documents/dsi31/proje%20de%20integration/task-manager-app/FICHE_SYNTHESE.md) : Fiche synthétique d'une page (Architecture, version en service, déroulé du rollback).
-* [SOUTENANCE.md](file:///c:/Users/ihebn/OneDrive/Documents/dsi31/proje%20de%20integration/task-manager-app/SOUTENANCE.md) : Guide pas-à-pas de 10 minutes pour réussir la présentation orale (MR verte, MR rouge, logs d'erreur, déploiement et rollback).
-* [test-results.xml](file:///c:/Users/ihebn/OneDrive/Documents/dsi31/proje%20de%20integration/task-manager-app/test-results.xml) : Rapport de tests au format JUnit XML généré automatiquement pour les artefacts CI.
+## 🔄 Pipeline CI/CD
+
+Le pipeline d'intégration et de livraison continues est configuré dans `.gitlab-ci.yml` (et `.github/workflows/ci.yml`) et comprend 3 étapes :
+
+1. **Stage `test` :**
+   * Exécution automatique sur chaque Merge Request et commit sur `main`.
+   * Matrice de versions parallèle testant sur **Python 3.10** et **Python 3.11**.
+   * Publication du rapport de tests JUnit XML en artefact (`test-results.xml`).
+2. **Stage `build` :**
+   * Conditionné par la réussite des tests (`needs: [test:unit]`).
+   * Construction de l'image Docker avec tag explicite et publication sur le registre.
+3. **Stage `deploy` :**
+   * Déclenché automatiquement sur création d'un tag Git `vX.Y.Z`.
+   * Déploiement en environnement de test sans reconstruction de l'image.
+   * Contrôle de santé systématique via appel HTTP sur `/health`.
+
+---
+
+## ⚙️ Configuration & Variables d'Environnement
+
+Un fichier modèle [.env.example](.env.example) est fourni. Pour personnaliser l'environnement :
+```bash
+cp .env.example .env
+```
+
+| Variable | Description | Valeur par défaut |
+| :--- | :--- | :--- |
+| `PORT` | Port d'écoute HTTP | `8000` |
+| `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql://taskflow_user:taskflow_pass@db:5432/taskflow_db` |
+| `IMAGE_TAG` | Tag de l'image pour déploiement/rollback | `v1.0.0` |
+| `GROQ_API_KEY` | Clé d'API Groq (Optionnel pour IA 120B) | *(Optionnel)* |
