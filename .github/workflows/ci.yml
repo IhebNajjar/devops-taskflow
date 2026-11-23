@@ -50,7 +50,7 @@ jobs:
   # 'needs: test' ensures image is only built when all tests succeed
   # --------------------------------------------------------------------------
   build:
-    name: Build & Publish Production Image
+    name: Build Production Container Image
     needs: test
     runs-on: ubuntu-latest
     permissions:
