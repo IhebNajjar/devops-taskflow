@@ -72,9 +72,17 @@ jobs:
       - name: Build and Publish Docker Image to GitHub Packages
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          docker build -t taskflow:${{ github.ref_name }} -t $IMAGE_NAME:${{ github.ref_name }} -t $IMAGE_NAME:latest .
+          TAG="latest"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG="pr-${{ github.event.pull_request.number }}"
+          elif [ -n "${{ github.ref_name }}" ]; then
+            TAG=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
+          fi
+          
+          docker build -t taskflow:$TAG -t $IMAGE_NAME:$TAG -t $IMAGE_NAME:latest .
+          
           if [ "${{ github.event_name }}" != "pull_request" ]; then
-            docker push $IMAGE_NAME:${{ github.ref_name }}
+            docker push $IMAGE_NAME:$TAG
             docker push $IMAGE_NAME:latest
             echo "Published to GitHub Packages: $IMAGE_NAME"
           fi
